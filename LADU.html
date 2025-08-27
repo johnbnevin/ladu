@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LADU: Local Arbitrary Data Utility</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22%23ffa500%22/><text x=%2250%22 y=%2260%22 font-family=%22Arial%22 font-size=%2240%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22%23000%22>L</text></svg>" type="image/svg+xml">
+    <style>
+        :root {
+            --bg-primary: #000;
+            --bg-secondary: #111;
+            --bg-tertiary: #222;
+            --border-primary: #333;
+            --border-secondary: #444;
+            --text-primary: #fff;
+            --text-secondary: #ccc;
+            --text-muted: #666;
+            --accent-primary: #ffa500;
+            --accent-secondary: #ffdd00;
+            --danger: #ff4444;
+            --warning: #ff6b35;
+            --accent-on-gray: #ffa500;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #fff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --border-primary: #dee2e6;
+            --border-secondary: #adb5bd;
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --text-muted: #6c757d;
+            --accent-primary: #ff8c00;
+            --accent-secondary: #ffa500;
+            --danger: #dc3545;
+            --warning: #fd7e14;
+            --accent-on-gray: #000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.4;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 8px;
+            position: relative;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 10px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--bg-primary);
+        }
+
+        .header h1 {
+            color: var(--accent-primary);
+            font-size: 32px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .unsaved-indicator {
+            background: var(--warning);
+            color: var(--text-primary);
+            padding: 6px;
+            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+            font-weight: bold;
+        }
+
+        .backup-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .title-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .title-input {
+            background: transparent;
+            border: 1px dashed var(--border-secondary);
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            padding: 8px 15px;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .title-input:focus {
+            outline: 1px solid var(--accent-primary);
+            background: var(--bg-tertiary);
+            border-style: solid;
+        }
+
+        .title-input::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .btn {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--accent-primary);
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-secondary);
+        }
+
+        .form-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            color: var(--accent-primary);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-primary);
+            padding-bottom: 8px;
+        }
+
+        .data-type-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .data-type-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            color: var(--text-primary);
+            padding: 12px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            flex: 1;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .data-type-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            transform: translateY(-1px);
+        }
+
+        .build-area {
+            min-height: 60px;
+            border: 2px dashed var(--border-secondary);
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .build-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .build-item-label {
+            background: var(--bg-primary);
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: var(--accent-on-gray);
+            min-width: 70px;
+            text-align: center;
+            font-weight: 500;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .build-item input, .build-item textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 32px;
+        }
+
+        .build-item textarea {
+            min-height: 32px;
+            max-height: 150px;
+        }
+
+        .build-item input:focus, .build-item textarea:focus {
+            outline: none;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        .remove-btn {
+            background: var(--danger);
+            color: var(--text-primary);
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .remove-btn:hover {
+            background: #ff6666;
+        }
+
+        .color-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .color-input-container input[type="color"] {
+            width: 40px;
+            height: 32px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .existing-colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-primary);
+            width: 100%;
+        }
+
+        .color-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 2px solid var(--border-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-swatch:hover {
+            border-color: var(--accent-primary);
+            transform: scale(1.1);
+        }
+
+        .existing-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-primary);
+            width: 100%;
+        }
+
+        .tag {
+            background: var(--bg-primary);
+            color: var(--accent-secondary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid var(--border-secondary);
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .tag:hover {
+            background: var(--accent-secondary);
+            color: var(--bg-primary);
+        }
+
+        .tag.selected {
+            background: var(--accent-secondary);
+            color: var(--bg-primary);
+        }
+
+        .search-filter {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .items-list {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            padding: 6px;
+            position: relative;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .item-field {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+
+        .item-field-label {
+            background: var(--border-secondary);
+            color: var(--accent-on-gray);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            min-width: 60px;
+            text-align: center;
+            flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: 1px;
+            font-weight: 500;
+        }
+
+        .item-field-value {
+            flex: 1;
+            word-break: break-word;
+            line-height: 1.3;
+            font-size: 14px;
+        }
+
+        .item-date {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-secondary);
+            margin-bottom: 3px;
+        }
+
+        .item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 1px;
+            justify-content: center;
+        }
+
+        .delete-item {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: var(--danger);
+            color: var(--text-primary);
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-item:hover {
+            background: #ff6666;
+        }
+
+        .no-items {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px 10px;
+            font-size: 14px;
+        }
+
+        .editable-label {
+            background: transparent;
+            border: 1px dashed var(--border-secondary);
+            color: var(--accent-primary);
+            font-size: 11px;
+            text-align: center;
+            min-width: 70px;
+            max-width: 100px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .editable-label:focus {
+            outline: 1px solid var(--accent-primary);
+            background: var(--bg-primary);
+            border-style: solid;
+        }
+
+        .editable-label::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .color-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .backup-controls {
+                flex-direction: column;
+            }
+            
+            .data-type-selector {
+                flex-direction: column;
+            }
+            
+            .data-type-btn {
+                min-width: auto;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+        <div class="logo">L</div>
+        <h1>LADU</h1>
+        <p>Local Arbitrary Data Utility</p>
+    </div>
+
+    <div class="unsaved-indicator" id="unsavedIndicator">
+        Unsaved changes detected
+    </div>
+
+    <div class="backup-controls">
+        <button class="btn" onclick="exportData()">📤 Export JSON</button>
+        <button class="btn" onclick="document.getElementById('fileInput').click()">📥 Import JSON</button>
+        <input type="file" id="fileInput" accept=".json" onchange="importData(event)">
+    </div>
+
+    <div class="title-section">
+        <input type="text" class="title-input" id="instanceTitle" value="Arbitrary List of Data" placeholder="Enter title for this instance...">
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">Create New Item</div>
+        
+        <div class="data-type-selector">
+            <button class="data-type-btn" onclick="addField('text')">📝 Text</button>
+            <button class="data-type-btn" onclick="addField('datetime')">📅 Date/Time</button>
+            <button class="data-type-btn" onclick="addField('tags')">🏷️ Tags</button>
+            <button class="data-type-btn" onclick="addField('color')">🎨 Color</button>
+        </div>
+
+        <div class="build-area" id="buildArea">
+            <div style="text-align: center; color: var(--text-muted);">Add data fields above to build your item</div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveItem()" style="width: 100%;">💾 Save Item</button>
+    </div>
+
+    <div class="search-filter">
+        <div class="section-title">Search & Filter</div>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search items..." oninput="filterItems()">
+        <div class="filter-tags" id="filterTags"></div>
+    </div>
+
+    <div class="items-list">
+        <div class="section-title">Saved Items</div>
+        <div id="itemsList" class="no-items">No items created yet</div>
+    </div>
+
+    <script>
+        let items = [];
+        let allTags = new Set();
+        let activeTags = new Set();
+        let buildFields = [];
+        let hasUnsavedChanges = false;
+        let usedColors = new Set();
+        let instanceTitle = 'Arbitrary List of Data';
+        let titleChanged = false;
+
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+
+        // Title management
+        function updateInstanceTitle() {
+            const titleInput = document.getElementById('instanceTitle');
+            instanceTitle = titleInput.value || 'Arbitrary List of Data';
+            if (titleInput.value !== 'Arbitrary List of Data') {
+                titleChanged = true;
+            }
+        }
+
+        function markUnsaved() {
+            hasUnsavedChanges = true;
+            document.getElementById('unsavedIndicator').style.display = 'block';
+        }
+
+        function markSaved() {
+            hasUnsavedChanges = false;
+            document.getElementById('unsavedIndicator').style.display = 'none';
+        }
+
+        function addField(type) {
+            const fieldId = 'field_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const defaultValue = type === 'color' ? '#ffa500' : '';
+            const field = { id: fieldId, type: type, label: type.charAt(0).toUpperCase() + type.slice(1), value: defaultValue };
+            buildFields.push(field);
+            renderBuildArea();
+        }
+
+        function removeField(fieldId) {
+            buildFields = buildFields.filter(f => f.id !== fieldId);
+            renderBuildArea();
+        }
+
+        function updateFieldValue(fieldId, value) {
+            const field = buildFields.find(f => f.id === fieldId);
+            if (field) field.value = value;
+        }
+
+        function updateFieldLabel(fieldId, label) {
+            const field = buildFields.find(f => f.id === fieldId);
+            if (field) field.label = label;
+        }
+
+        function renderBuildArea() {
+            const buildArea = document.getElementById('buildArea');
+            
+            if (buildFields.length === 0) {
+                buildArea.innerHTML = '<div style="text-align: center; color: var(--text-muted);">Add data fields above to build your item</div>';
+                return;
+            }
+
+            buildArea.innerHTML = buildFields.map(field => {
+                let inputHtml = '';
+                
+                switch (field.type) {
+                    case 'text':
+                        inputHtml = `<textarea rows="1" placeholder="Enter text (max 880 chars)" maxlength="880" oninput="updateFieldValue('${field.id}', this.value)">${field.value}</textarea>`;
+                        break;
+                    case 'datetime':
+                        inputHtml = `<input type="datetime-local" onchange="updateFieldValue('${field.id}', this.value)" value="${field.value}">`;
+                        break;
+                    case 'tags':
+                        inputHtml = `
+                            <div class="tags-container">
+                                <input type="text" placeholder="Enter tags (comma separated)" oninput="updateFieldValue('${field.id}', this.value)" value="${field.value}">
+                                ${allTags.size > 0 ? `
+                                    <div class="existing-tags">${Array.from(allTags).map(tag => 
+                                        `<span class="tag" onclick="addTagToField('${field.id}', '${tag}')">${tag}</span>`
+                                    ).join('')}</div>
+                                ` : ''}
+                            </div>
+                        `;
+                        break;
+                    case 'color':
+                        const existingColors = Array.from(usedColors).filter(c => c !== '#111');
+                        inputHtml = `
+                            <div class="color-container">
+                                <div class="color-input-container">
+                                    <input type="color" onchange="updateFieldValue('${field.id}', this.value)" value="${field.value || '#ffa500'}">
+                                    <span style="flex: 1;">Selected: ${field.value || '#ffa500'}</span>
+                                </div>
+                                ${existingColors.length > 0 ? `
+                                    <div class="existing-colors">
+                                        ${existingColors.map(color => 
+                                            `<div class="color-swatch" style="background-color: ${color}" onclick="selectExistingColor('${field.id}', '${color}')" title="${color}"></div>`
+                                        ).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                        break;
+                }
+
+                return `
+                    <div class="build-item">
+                        <input class="editable-label" value="${field.label}" onchange="updateFieldLabel('${field.id}', this.value)" placeholder="Label">
+                        ${inputHtml}
+                        <button class="remove-btn" onclick="removeField('${field.id}')">&times;</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addTagToField(fieldId, tag) {
+            const field = buildFields.find(f => f.id === fieldId);
+            if (field) {
+                const currentTags = field.value ? field.value.split(',').map(t => t.trim()).filter(t => t) : [];
+                if (!currentTags.includes(tag)) {
+                    currentTags.push(tag);
+                    field.value = currentTags.join(', ');
+                    renderBuildArea();
+                }
+            }
+        }
+
+        function selectExistingColor(fieldId, color) {
+            const field = buildFields.find(f => f.id === fieldId);
+            if (field) {
+                field.value = color;
+                renderBuildArea();
+            }
+        }
+
+        function saveItem() {
+            if (buildFields.length === 0) {
+                alert('Please add some data fields before saving');
+                return;
+            }
+
+            const colorField = buildFields.find(f => f.type === 'color');
+            const backgroundColor = colorField ? (colorField.value || '#ffa500') : '#111';
+
+            const item = {
+                id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                fields: buildFields.map(field => {
+                    if (field.type === 'color' && !field.value) {
+                        return {...field, value: '#ffa500'};
+                    }
+                    return {...field};
+                }),
+                createdAt: new Date().toISOString(),
+                backgroundColor: backgroundColor
+            };
+
+            // Extract tags and colors
+            buildFields.forEach(field => {
+                if (field.type === 'tags' && field.value) {
+                    const tags = field.value.split(',').map(t => t.trim()).filter(t => t);
+                    tags.forEach(tag => allTags.add(tag));
+                } else if (field.type === 'color') {
+                    const colorValue = field.value || '#ffa500';
+                    usedColors.add(colorValue);
+                }
+            });
+
+            items.push(item);
+            buildFields = [];
+            markUnsaved();
+            renderBuildArea();
+            renderItems();
+            renderFilterTags();
+        }
+
+        function deleteItem(itemId) {
+            if (confirm('Delete this item?')) {
+                items = items.filter(item => item.id !== itemId);
+                markUnsaved();
+                renderItems();
+                
+                // Rebuild allTags and usedColors
+                allTags.clear();
+                usedColors.clear();
+                items.forEach(item => {
+                    item.fields.forEach(field => {
+                        if (field.type === 'tags' && field.value) {
+                            const tags = field.value.split(',').map(t => t.trim()).filter(t => t);
+                            tags.forEach(tag => allTags.add(tag));
+                        } else if (field.type === 'color' && field.value) {
+                            usedColors.add(field.value);
+                        }
+                    });
+                });
+                renderFilterTags();
+            }
+        }
+
+        function formatDateTime(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        function renderItems() {
+            const itemsList = document.getElementById('itemsList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filteredItems = items.filter(item => {
+                // Search filter - search all field values, labels, and formatted dates
+                const searchMatch = !searchTerm || item.fields.some(field => {
+                    // Search field value and label
+                    const valueMatch = field.value.toString().toLowerCase().includes(searchTerm);
+                    const labelMatch = field.label.toLowerCase().includes(searchTerm);
+                    
+                    // For datetime fields, also search the formatted date
+                    let dateMatch = false;
+                    if (field.type === 'datetime' && field.value) {
+                        const formattedDate = formatDateTime(field.value).toLowerCase();
+                        dateMatch = formattedDate.includes(searchTerm);
+                    }
+                    
+                    return valueMatch || labelMatch || dateMatch;
+                });
+                
+                // Tag filter - items must have ALL selected tags
+                const tagMatch = activeTags.size === 0 || (() => {
+                    // Get all tags from this item
+                    const itemTags = new Set();
+                    item.fields.forEach(field => {
+                        if (field.type === 'tags' && field.value) {
+                            const tags = field.value.split(',').map(t => t.trim()).filter(t => t);
+                            tags.forEach(tag => itemTags.add(tag));
+                        }
+                    });
+                    
+                    // Check if item has ALL selected tags
+                    return Array.from(activeTags).every(tag => itemTags.has(tag));
+                })();
+                
+                return searchMatch && tagMatch;
+            });
+
+            // Sort items: datetime items first (by date), then others alphabetically
+            filteredItems.sort((a, b) => {
+                const aDateField = a.fields.find(f => f.type === 'datetime' && f.value);
+                const bDateField = b.fields.find(f => f.type === 'datetime' && f.value);
+                
+                // Both have dates - sort by date (oldest first)
+                if (aDateField && bDateField) {
+                    return new Date(aDateField.value) - new Date(bDateField.value);
+                }
+                
+                // Only A has date - A goes first
+                if (aDateField && !bDateField) {
+                    return -1;
+                }
+                
+                // Only B has date - B goes first
+                if (!aDateField && bDateField) {
+                    return 1;
+                }
+                
+                // Neither has date - sort alphabetically by text field, then by tags
+                const getTextForSorting = (item) => {
+                    const textField = item.fields.find(f => f.type === 'text' && f.value);
+                    if (textField) return textField.value.toLowerCase();
+                    
+                    const tagsField = item.fields.find(f => f.type === 'tags' && f.value);
+                    if (tagsField) return tagsField.value.toLowerCase();
+                    
+                    return '';
+                };
+                
+                const aText = getTextForSorting(a);
+                const bText = getTextForSorting(b);
+                
+                return aText.localeCompare(bText);
+            });
+
+            if (filteredItems.length === 0) {
+                itemsList.innerHTML = '<div class="no-items">No items match your criteria</div>';
+                return;
+            }
+
+            itemsList.innerHTML = filteredItems.map(item => {
+                const dateField = item.fields.find(f => f.type === 'datetime');
+                const tagsFields = item.fields.filter(f => f.type === 'tags');
+                
+                return `
+                    <div class="item" style="border-left-color: ${item.backgroundColor}">
+                        <button class="delete-item" onclick="deleteItem('${item.id}')">&times;</button>
+                        
+                        ${dateField && dateField.value ? `<div class="item-date">${formatDateTime(dateField.value)}</div>` : ''}
+                        
+                        <div class="item-content">
+                            ${item.fields.filter(f => f.type !== 'color').map(field => {
+                                if (field.type === 'datetime') return '';
+                                if (field.type === 'tags') {
+                                    const tags = field.value ? field.value.split(',').map(t => t.trim()).filter(t => t) : [];
+                                    return tags.length > 0 ? `
+                                        <div class="item-field" style="justify-content: center;">
+                                            <div class="item-tags">
+                                                ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                    ` : '';
+                                }
+                                return field.value ? `
+                                    <div class="item-field">
+                                        <span class="item-field-label">${field.label}</span>
+                                        <span class="item-field-value">${field.value}</span>
+                                    </div>
+                                ` : '';
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderFilterTags() {
+            const filterTags = document.getElementById('filterTags');
+            filterTags.innerHTML = Array.from(allTags).map(tag => 
+                `<span class="tag ${activeTags.has(tag) ? 'selected' : ''}" onclick="toggleTagFilter('${tag}')">${tag}</span>`
+            ).join('');
+        }
+
+        function toggleTagFilter(tag) {
+            if (activeTags.has(tag)) {
+                activeTags.delete(tag);
+            } else {
+                activeTags.add(tag);
+            }
+            renderFilterTags();
+            renderItems();
+        }
+
+        function filterItems() {
+            renderItems();
+        }
+
+        function exportData() {
+            let finalTitle = instanceTitle;
+            
+            // If title hasn't been changed from default, ask user
+            if (!titleChanged && instanceTitle === 'Arbitrary List of Data') {
+                const userTitle = prompt('Enter a title for this data export:', instanceTitle);
+                if (userTitle !== null && userTitle.trim()) {
+                    finalTitle = userTitle.trim();
+                    document.getElementById('instanceTitle').value = finalTitle;
+                    instanceTitle = finalTitle;
+                    titleChanged = true;
+                }
+            }
+            
+            const data = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                title: finalTitle,
+                items: items,
+                tags: Array.from(allTags),
+                colors: Array.from(usedColors)
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ladu-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            markSaved();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (data.items && Array.isArray(data.items)) {
+                        if (items.length > 0 && !confirm('This will replace all existing data. Continue?')) {
+                            return;
+                        }
+                        
+                        items = data.items;
+                        allTags = new Set(data.tags || []);
+                        usedColors = new Set(data.colors || []);
+                        activeTags.clear();
+                        buildFields = [];
+                        
+                        // Import title if available
+                        if (data.title) {
+                            instanceTitle = data.title;
+                            document.getElementById('instanceTitle').value = instanceTitle;
+                            titleChanged = true;
+                        }
+                        
+                        // Rebuild tags and colors from items if not in backup
+                        if (!data.tags || !data.colors) {
+                            allTags.clear();
+                            usedColors.clear();
+                            items.forEach(item => {
+                                item.fields.forEach(field => {
+                                    if (field.type === 'tags' && field.value) {
+                                        const tags = field.value.split(',').map(t => t.trim()).filter(t => t);
+                                        tags.forEach(tag => allTags.add(tag));
+                                    } else if (field.type === 'color' && field.value) {
+                                        usedColors.add(field.value);
+                                    }
+                                });
+                            });
+                        }
+                        
+                        renderBuildArea();
+                        renderItems();
+                        renderFilterTags();
+                        markSaved();
+                        alert('Data imported successfully');
+                    } else {
+                        alert('Invalid JSON format');
+                    }
+                } catch (error) {
+                    alert('Error reading JSON file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            renderBuildArea();
+            renderItems();
+            renderFilterTags();
+            
+            // Add title change listener
+            document.getElementById('instanceTitle').addEventListener('input', updateInstanceTitle);
+        });
+
+        // Warn about unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>
