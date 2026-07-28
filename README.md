@@ -1,3 +1,14 @@
+> **Notice**
+>
+> Due to Microsoft/GitHub's recent willingness to remove bitchat software at the
+> behest of Indian government pressure, GitHub is no longer the source for my
+> latest repositories.
+>
+> See **[git.jbnco.co](https://git.jbnco.co)** for my projects, now hosted on
+> Nostr ngit.
+
+---
+
 # ladu
 The Local Arbitrary Data Utility is a browser-based tool for creating, organizing, and managing custom data structures offline.  Grocery lists, calendars, tasks, and contacts are among the possibilities.
 
